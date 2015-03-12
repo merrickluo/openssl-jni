@@ -23,16 +23,35 @@ ROOT_PATH := $(LOCAL_PATH)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE:= encryptor
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/openssl/include/ \
+					$(LOCAL_PATH)/libsodium/include/ \
+					$(LOCAL_PATH)/
 
 LOCAL_SRC_FILES:= \
-	   system.cpp
+	system.cpp \
+	encrypt.c
+
 
 LOCAL_LDLIBS := -ldl -llog
 
-LOCAL_STATIC_LIBRARIES := cpufeatures
+LOCAL_STATIC_LIBRARIES := cpufeatures \
+	libsodium \
+	libcrypto \
+	libssl
+
 
 include $(BUILD_SHARED_LIBRARY)
 
+#######################################################
+## libsodium
+#######################################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libsodium
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libsodium.a
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/libsodium/include/
+
+include $(PREBUILT_STATIC_LIBRARY)
 #######################################################
 ## OpenSSL
 #######################################################
