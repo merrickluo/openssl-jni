@@ -105,6 +105,38 @@ JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_initEncryptor(JNIEn
     enc_ctx_init(enc_method, text_d_ctx, 0);
 }
 
+JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encryptAll(JNIEnv *env, jclass thiz, jbyteArray array, jstring jpassword, jstring jmethod) {
+    const char *password = env->GetStringUTFChars(jpassword, 0);
+    const char *method = env->GetStringUTFChars(jmethod, 0);
+
+    struct enc_ctx *temp_e_ctx;
+    temp_e_ctx = (enc_ctx *)malloc(sizeof(struct enc_ctx));
+    int enc_method = enc_init(password, method);
+    enc_ctx_init(enc_method, temp_e_ctx, 1);
+
+    char *buffer = as_char_array(env, array);
+    ssize_t size = strlen(buffer);
+    char *encrypted = ss_encrypt(BUFF_SIZE, buffer, &size, temp_e_ctx);
+    return as_byte_array(env, encrypted, strlen(encrypted));
+}
+
+JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decryptAll(JNIEnv *env, jclass thiz, jbyteArray array, jstring jpassword, jstring jmethod) {
+    const char *password = env->GetStringUTFChars(jpassword, 0);
+    const char *method = env->GetStringUTFChars(jmethod, 0);
+
+    struct enc_ctx *temp_d_ctx;
+    temp_d_ctx = (enc_ctx *)malloc(sizeof(struct enc_ctx));
+    int enc_method = enc_init(password, method);
+    enc_ctx_init(enc_method, temp_d_ctx, 1);
+
+
+    char *buffer = as_char_array(env, array);
+    ssize_t size = strlen(buffer);
+    char *decrypted = ss_decrypt(BUFF_SIZE, buffer, &size, temp_d_ctx);
+    return as_byte_array(env, decrypted, strlen(decrypted));
+}
+
+
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt(JNIEnv *env, jclass thiz, jbyteArray array) {
     char *buffer = as_char_array(env, array);
     ssize_t size = strlen(buffer);
