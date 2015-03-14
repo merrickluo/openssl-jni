@@ -494,8 +494,8 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
         }
 
 #ifdef DEBUG
-        dump("PLAIN", plaintext, p_len);
-        dump("CIPHER", ciphertext + iv_len, c_len);
+        LOGE("PLAIN text is %s, len is %d", plaintext, p_len);
+        LOGE("CIPHER text is %s, len is %d", ciphertext + iv_len, c_len);
 #endif
 
         if (*len < iv_len + c_len) {
@@ -503,7 +503,7 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
         }
         *len = iv_len + c_len;
         memcpy(plaintext, ciphertext, *len);
-        LOGE("encrypted text: %s",plaintext);
+        LOGE("final len is %d",*len);
         return plaintext;
     } else {
         char *begin = plaintext;
@@ -643,8 +643,8 @@ char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len,
         }
 
 #ifdef DEBUG
-        dump("PLAIN", plaintext, p_len);
-        dump("CIPHER", ciphertext + iv_len, c_len - iv_len);
+        LOGE("d PLAIN text is %s, length is %d", plaintext, p_len);
+        LOGE("d CIPHER text is %s, length is %d", ciphertext + iv_len, c_len - iv_len);
 #endif
 
         if (*len < p_len) {
@@ -652,7 +652,7 @@ char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len,
         }
         *len = p_len;
         memcpy(ciphertext, plaintext, *len);
-        LOGE("decrypted text: %s",ciphertext);
+        LOGE("final len is %d", *len);
         return ciphertext;
     } else {
         char *begin = ciphertext;

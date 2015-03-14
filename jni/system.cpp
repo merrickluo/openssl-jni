@@ -114,10 +114,10 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encryptAll(JN
     int enc_method = enc_init(password, method);
     enc_ctx_init(enc_method, temp_e_ctx, 1);
 
-    char *buffer = as_char_array(env, array);
-    ssize_t size = strlen(buffer);
+    ssize_t size = 0;
+    char *buffer = as_char_array(env, array, &size);
     char *encrypted = ss_encrypt(BUFF_SIZE, buffer, &size, temp_e_ctx);
-    return as_byte_array(env, encrypted, strlen(encrypted));
+    return as_byte_array(env, encrypted, size);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decryptAll(JNIEnv *env, jclass thiz, jbyteArray array, jstring jpassword, jstring jmethod) {
@@ -129,38 +129,37 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decryptAll(JN
     int enc_method = enc_init(password, method);
     enc_ctx_init(enc_method, temp_d_ctx, 1);
 
-
-    char *buffer = as_char_array(env, array);
-    ssize_t size = strlen(buffer);
+    ssize_t size = 0;
+    char *buffer = as_char_array(env, array, &size);
     char *decrypted = ss_decrypt(BUFF_SIZE, buffer, &size, temp_d_ctx);
-    return as_byte_array(env, decrypted, strlen(decrypted));
+    return as_byte_array(env, decrypted, size);
 }
 
 
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt(JNIEnv *env, jclass thiz, jbyteArray array) {
-    char *buffer = as_char_array(env, array);
-    ssize_t size = strlen(buffer);
+    ssize_t size = 0;
+    char *buffer = as_char_array(env, array, &size);
     char *encrypted = ss_encrypt(BUFF_SIZE, buffer, &size, text_e_ctx);
-    return as_byte_array(env, encrypted, strlen(encrypted));
+    return as_byte_array(env, encrypted, size);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decrypt(JNIEnv *env, jclass thiz, jbyteArray array) {
-    char *buffer = as_char_array(env, array);
-    ssize_t size = strlen(buffer);
+    ssize_t size = 0;
+    char *buffer = as_char_array(env, array, &size);
     char *decrypted = ss_decrypt(BUFF_SIZE, buffer, &size, text_d_ctx);
-    return as_byte_array(env, decrypted, strlen(decrypted));
+    return as_byte_array(env, decrypted, size);
 }
 
-jbyteArray as_byte_array(JNIEnv *env, char* buf, int len) {
+jbyteArray as_byte_array(JNIEnv *env, char* buf, ssize_t len) {
     jbyteArray array = env->NewByteArray(len);
     env->SetByteArrayRegion(array, 0, len, reinterpret_cast<jbyte*>(buf));
     return array;
 }
 
-char* as_char_array(JNIEnv *env, jbyteArray array) {
-    int len = env->GetArrayLength(array);
-    char* buf = new char[len];
-    env->GetByteArrayRegion(array, 0, len, reinterpret_cast<jbyte*>(buf));
+char* as_char_array(JNIEnv *env, jbyteArray array,ssize_t *len) {
+    *len = env->GetArrayLength(array);
+    char* buf = new char[*len];
+    env->GetByteArrayRegion(array, 0, *len, reinterpret_cast<jbyte*>(buf));
     return buf;
 }
 
