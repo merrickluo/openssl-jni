@@ -429,7 +429,7 @@ char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method)
 }
 
 char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
-                  struct enc_ctx *ctx)
+                  struct enc_ctx *ctx, uint8_t *iv)
 {
     if (ctx != NULL) {
         static int tmp_len = 0;

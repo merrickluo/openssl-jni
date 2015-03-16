@@ -51,7 +51,7 @@ JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_initEncryptor
  * Signature: ([B)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt
-  (JNIEnv *, jclass, jbyteArray);
+    (JNIEnv *, jclass, jbyteArray, jbyteArray);
 
 /*
  * Class:     me_smartproxy_crypto_CryptoUtils
@@ -59,7 +59,7 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt
  * Signature: ([B)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decrypt
-  (JNIEnv *, jclass, jbyteArray);
+    (JNIEnv *, jclass, jbyteArray, jbyteArray);
 
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decryptAll
   (JNIEnv *, jclass , jbyteArray , jstring , jstring);
