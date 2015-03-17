@@ -69,6 +69,8 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encryptAll
 
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_randBytes
   (JNIEnv *, jclass, int);
+JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_releaseEncryptor
+  (JNIEnv *, jclass , jlong);
 
 jbyteArray as_byte_array(JNIEnv *, char *, ssize_t);
 

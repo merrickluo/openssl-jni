@@ -73,7 +73,7 @@ typedef struct {
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
-#define DEBUG 1
+//#define DEBUG 1
 
 struct enc_ctx {
     uint8_t init;

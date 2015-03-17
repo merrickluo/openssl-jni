@@ -20,6 +20,11 @@ struct enc_connection {
 
 std::map<long,enc_connection *> enc_ctx_map;
 
+JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_releaseEncryptor(JNIEnv *env, jclass thiz, jlong id) {
+    enc_connection *connection = enc_ctx_map[id];
+    free(connection);
+}
+
 JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_initEncryptor(JNIEnv *env, jclass thiz, jstring jpassword, jstring jmethod, jlong id) {
     const char *password = env->GetStringUTFChars(jpassword, 0);
     const char *method = env->GetStringUTFChars(jmethod, 0);
@@ -98,7 +103,6 @@ jbyteArray as_byte_array(JNIEnv *env, char* buf, ssize_t len) {
 
 char* as_char_array(JNIEnv *env, jbyteArray array,ssize_t *len) {
     *len = env->GetArrayLength(array);
-    LOGE("array len is %d", *len);
     char* buf = new char[*len];
 //    env->GetByteArrayRegion(array, 0, *len, reinterpret_cast<jbyte*>(buf));
     buf = (char*) env->GetByteArrayElements(array, NULL);

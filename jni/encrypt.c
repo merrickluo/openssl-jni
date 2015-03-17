@@ -661,7 +661,9 @@ char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len,
         }
         *len = p_len;
         memcpy(ciphertext, plaintext, *len);
+#ifdef DEBUG
         LOGE("final len is %d", *len);
+#endif
         return ciphertext;
     } else {
         char *begin = ciphertext;
