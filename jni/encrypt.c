@@ -56,6 +56,12 @@ static void dump(char *tag, char *text, int len)
 }
 #endif
 
+void FATAL(const char *msg)
+{
+    LOGE("%s", msg);
+    exit(-1);
+}
+
 static const char * supported_ciphers[CIPHER_NUM] =
 {
     "table",
@@ -342,7 +348,7 @@ void cipher_context_set_iv(cipher_ctx_t *ctx, uint8_t *iv, size_t iv_len,
     }
 
 #ifdef DEBUG
-    dump("IV", (char *)iv, iv_len);
+    LOGE("real iv use is %s , len is %d", (char *)iv, iv_len);
 #endif
 }
 
@@ -429,7 +435,7 @@ char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method)
 }
 
 char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
-                  struct enc_ctx *ctx, uint8_t *iv)
+                  struct enc_ctx *ctx)
 {
     if (ctx != NULL) {
         static int tmp_len = 0;
@@ -451,7 +457,7 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
 
         if (!ctx->init) {
             uint8_t iv[MAX_IV_LENGTH];
-            cipher_context_set_iv(&ctx->evp, iv, iv_len, 1);
+            cipher_context_set_iv(&ctx->evp, iv, enc_iv_len, 1);
             memcpy(ciphertext, iv, iv_len);
             ctx->counter = 0;
             ctx->init = 1;
@@ -503,7 +509,10 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
         }
         *len = iv_len + c_len;
         memcpy(plaintext, ciphertext, *len);
-        LOGE("final len is %d",*len);
+#ifdef DEBUG
+        LOGE("RESULT text is %s len is %d",plaintext, *len);
+//        LOGE("IV is %s",iv);
+#endif
         return plaintext;
     } else {
         char *begin = plaintext;
@@ -601,7 +610,7 @@ char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len,
             iv_len = enc_iv_len;
             p_len -= iv_len;
             memcpy(iv, ciphertext, iv_len);
-            cipher_context_set_iv(&ctx->evp, iv, iv_len, 0);
+            cipher_context_set_iv(&ctx->evp, iv, enc_iv_len, 0);
             ctx->counter = 0;
             ctx->init = 1;
         }
@@ -741,10 +750,4 @@ int enc_init(const char *pass, const char *method)
         enc_key_init(m, pass);
     }
     return m;
-}
-
-void FATAL(const char *msg)
-{
-    LOGE("%s", msg);
-    exit(-1);
 }
