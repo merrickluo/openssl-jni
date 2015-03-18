@@ -21,8 +21,8 @@ struct enc_connection {
 std::map<long,enc_connection *> enc_ctx_map;
 
 JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_releaseEncryptor(JNIEnv *env, jclass thiz, jlong id) {
-    enc_connection *connection = enc_ctx_map[id];
-    free(connection);
+//    enc_ctx_map.erase(id);
+//    LOGE("connection map size is %d", enc_ctx_map.size());
 }
 
 JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_initEncryptor(JNIEnv *env, jclass thiz, jstring jpassword, jstring jmethod, jlong id) {
@@ -40,6 +40,9 @@ JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_initEncryptor(JNIEn
         enc_ctx_init(enc_method, connection->text_d_ctx, 0);
         enc_ctx_map[id] = connection;
     }
+
+    env->ReleaseStringUTFChars(jpassword, password);
+    env->ReleaseStringUTFChars(jmethod, method);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encryptAll(JNIEnv *env, jclass thiz, jbyteArray array, jstring jpassword, jstring jmethod) {
@@ -78,8 +81,6 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decryptAll(JN
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt(JNIEnv *env, jclass thiz, jbyteArray array, jlong id) {
     ssize_t size = 0, iv_size = 0;
     char *buffer = as_char_array(env, array, &size);
-//    uint8_t *iv = (uint8_t*) as_char_array(env, jIV, &iv_size);
-//    LOGE("passed iv is %s",(char*) iv);
     enc_connection *connection = enc_ctx_map[(long)id];
     char *encrypted = ss_encrypt(BUFF_SIZE, buffer, &size, connection->text_e_ctx);
     return as_byte_array(env, encrypted, size);
@@ -88,8 +89,7 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt(JNIEn
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decrypt(JNIEnv *env, jclass thiz, jbyteArray array, jlong id) {
     ssize_t size = 0, iv_size = 0;
     char *buffer = as_char_array(env, array, &size);
-//    uint8_t *iv = (uint8_t *) as_char_array(env, jIV, &iv_size);
-    enc_connection *connection = enc_ctx_map[id];
+    enc_connection *connection = enc_ctx_map[(long)id];
     char *decrypted = ss_decrypt(BUFF_SIZE, buffer, &size, connection->text_d_ctx);
     return as_byte_array(env, decrypted, size);
 }
@@ -97,7 +97,6 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decrypt(JNIEn
 jbyteArray as_byte_array(JNIEnv *env, char* buf, ssize_t len) {
     jbyteArray array = env->NewByteArray(len);
     env->ReleaseByteArrayElements(array, (jbyte *)buf, JNI_COMMIT);
-//    env->SetByteArrayRegion(array, 0, len, reinterpret_cast<jbyte*>(buf));
     return array;
 }
 
