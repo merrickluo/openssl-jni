@@ -21,8 +21,22 @@ struct enc_connection {
 std::map<long,enc_connection *> enc_ctx_map;
 
 JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_releaseEncryptor(JNIEnv *env, jclass thiz, jlong id) {
-//    enc_ctx_map.erase(id);
-//    LOGE("connection map size is %d", enc_ctx_map.size());
+    enc_connection *connection = enc_ctx_map[id];
+    if(connection != NULL) {
+        if(connection->text_e_ctx != NULL) {
+            cipher_context_release(&connection->text_e_ctx->evp);
+            free(connection->text_e_ctx);
+        }
+        if(connection->text_d_ctx != NULL) {
+            cipher_context_release(&connection->text_d_ctx->evp);
+            free(connection->text_d_ctx);
+        }
+        free(connection);
+        enc_ctx_map.erase(id);
+        LOGE("delete one connection, %d connection remain", enc_ctx_map.size());
+    } else {
+        LOGE("what happened here");
+    }
 }
 
 JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_initEncryptor(JNIEnv *env, jclass thiz, jstring jpassword, jstring jmethod, jlong id) {
