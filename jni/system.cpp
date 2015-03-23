@@ -18,10 +18,11 @@ struct enc_connection {
     enc_ctx *text_d_ctx;
 };
 
-std::map<long,enc_connection *> enc_ctx_map;
+std::map<long long int,enc_connection *> enc_ctx_map;
 
 JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_releaseEncryptor(JNIEnv *env, jclass thiz, jlong id) {
     enc_connection *connection = enc_ctx_map[id];
+    enc_ctx_map.erase(id);
     if(connection != NULL) {
         if(connection->text_e_ctx != NULL) {
             cipher_context_release(&connection->text_e_ctx->evp);
@@ -32,31 +33,28 @@ JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_releaseEncryptor(JN
             free(connection->text_d_ctx);
         }
         free(connection);
-        enc_ctx_map.erase(id);
-        LOGE("delete one connection, %d connection remain", enc_ctx_map.size());
-    } else {
-        LOGE("what happened here");
+//        LOGE("delete one connection id is %lld, %d connection remain", id, enc_ctx_map.size());
+//    } else {
+//        LOGE("what happened here id is %lld", id);
     }
 }
 
 JNIEXPORT void JNICALL Java_me_smartproxy_crypto_CryptoUtils_initEncryptor(JNIEnv *env, jclass thiz, jstring jpassword, jstring jmethod, jlong id) {
-    const char *password = env->GetStringUTFChars(jpassword, 0);
-    const char *method = env->GetStringUTFChars(jmethod, 0);
-
     enc_connection *connection = enc_ctx_map[id];
 
     if(connection == NULL) {
+        const char *password = env->GetStringUTFChars(jpassword, 0);
+        const char *method = env->GetStringUTFChars(jmethod, 0);
         connection = (enc_connection *)malloc(sizeof(struct enc_connection));
         connection->text_e_ctx = (enc_ctx *)malloc(sizeof(struct enc_ctx));
         connection->text_d_ctx = (enc_ctx *)malloc(sizeof(struct enc_ctx));
-        int enc_method = enc_init(password, method);
+        int enc_method = enc_init(password, "rc4-md5");
         enc_ctx_init(enc_method, connection->text_e_ctx, 1);
         enc_ctx_init(enc_method, connection->text_d_ctx, 0);
         enc_ctx_map[id] = connection;
+        env->ReleaseStringUTFChars(jpassword, password);
+        env->ReleaseStringUTFChars(jmethod, method);
     }
-
-    env->ReleaseStringUTFChars(jpassword, password);
-    env->ReleaseStringUTFChars(jmethod, method);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encryptAll(JNIEnv *env, jclass thiz, jbyteArray array, jstring jpassword, jstring jmethod) {
@@ -92,32 +90,46 @@ JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decryptAll(JN
     return as_byte_array(env, decrypted, size);
 }
 
-JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt(JNIEnv *env, jclass thiz, jbyteArray array, jlong id) {
-    ssize_t size = 0, iv_size = 0;
-    char *buffer = as_char_array(env, array, &size);
-    enc_connection *connection = enc_ctx_map[(long)id];
-    char *encrypted = ss_encrypt(BUFF_SIZE, buffer, &size, connection->text_e_ctx);
-    return as_byte_array(env, encrypted, size);
+JNIEXPORT jint JNICALL Java_me_smartproxy_crypto_CryptoUtils_encrypt(JNIEnv *env, jclass thiz, jobject array, 
+                                                                    jint jsize, jlong id) {
+
+    ssize_t size = (ssize_t) jsize;
+    jbyte *byteArray = (jbyte *) env->GetDirectBufferAddress(array);
+    char *buffer = (char *) malloc(size * sizeof(char));
+
+    memcpy(buffer, byteArray, size);
+    enc_connection *connection = enc_ctx_map[id];
+    buffer = ss_encrypt(BUFF_SIZE, buffer, &size, connection->text_e_ctx);
+    memcpy(byteArray, buffer, size);
+
+    free(buffer);
+    return size;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_me_smartproxy_crypto_CryptoUtils_decrypt(JNIEnv *env, jclass thiz, jbyteArray array, jlong id) {
-    ssize_t size = 0, iv_size = 0;
-    char *buffer = as_char_array(env, array, &size);
-    enc_connection *connection = enc_ctx_map[(long)id];
-    char *decrypted = ss_decrypt(BUFF_SIZE, buffer, &size, connection->text_d_ctx);
-    return as_byte_array(env, decrypted, size);
+JNIEXPORT jint JNICALL Java_me_smartproxy_crypto_CryptoUtils_decrypt(JNIEnv *env, jclass thiz, jobject array, 
+                                                                    jint jsize, jlong id) {
+    ssize_t size = (ssize_t) jsize;
+    jbyte *byteArray = (jbyte *) env->GetDirectBufferAddress(array);
+    char *buffer = (char *) malloc(size * sizeof(char));
+
+    memcpy(buffer, byteArray, size);
+    enc_connection *connection = enc_ctx_map[id];
+    buffer = ss_decrypt(BUFF_SIZE, buffer, &size, connection->text_d_ctx);
+    memcpy(byteArray, buffer, size);
+
+    free(buffer);
+    return size;
 }
 
 jbyteArray as_byte_array(JNIEnv *env, char* buf, ssize_t len) {
     jbyteArray array = env->NewByteArray(len);
-    env->ReleaseByteArrayElements(array, (jbyte *)buf, JNI_COMMIT);
+    env->ReleaseByteArrayElements(array, (jbyte *)buf, JNI_ABORT);
     return array;
 }
 
 char* as_char_array(JNIEnv *env, jbyteArray array,ssize_t *len) {
     *len = env->GetArrayLength(array);
     char* buf = new char[*len];
-//    env->GetByteArrayRegion(array, 0, *len, reinterpret_cast<jbyte*>(buf));
     buf = (char*) env->GetByteArrayElements(array, NULL);
     return buf;
 }
